@@ -8,7 +8,7 @@ int columns[17] = {
 struct keylist {
   struct keylist *next;
   struct keylist *prev;
-  unsigned int keyCode;
+  unsigned long keyCode;
   int column;
   int row;
 };
@@ -17,7 +17,7 @@ struct keylist {
 struct keylist *first = NULL;
 struct keylist *last = NULL;
                   
-unsigned int normalMap[17][6] = {
+unsigned long normalMap[17][6] = {
   { 
     //0
     KEY_ESC, KEY_TILDE, KEY_TAB, KEY_LEFT_CTRL, KEY_LEFT_SHIFT, KEY_LEFT_CTRL 
@@ -88,7 +88,7 @@ unsigned int normalMap[17][6] = {
   }
 };
 
-unsigned int fnMap[17][6] = {
+unsigned long fnMap[17][6] = {
   { 
     //0
     0, 0, 0, KEY_CAPS_LOCK, 0, 0 
@@ -119,19 +119,19 @@ unsigned int fnMap[17][6] = {
   },
   {
     //7
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_STOP, 0, 0, 0, 0, 0
   },
   {
     //8
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_PREV_TRACK, 0, 0, 0, 0, 0
   },
   {
     //9
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_PLAY_PAUSE, 0, 0, 0, 0, 0
   },
   {
     //10
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_NEXT_TRACK, 0, 0, 0, 0, 0
   },
   {
     //11
@@ -139,15 +139,15 @@ unsigned int fnMap[17][6] = {
   },
   {
     //12
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_MUTE, 0, 0, 0, 0, 0
   },
   {
     //13
-    0, 0, 0, 0, 0, 0
+    KEY_MEDIA_VOLUME_DEC, 0, 0, 0, 0, 0
   },
   {
     //14
-    0, KEY_PRINTSCREEN, 0, 0, 0, 0
+    KEY_MEDIA_VOLUME_INC, KEY_PRINTSCREEN, 0, 0, 0, 0
   },
   {
     //15
@@ -254,13 +254,13 @@ void reportKeys() {
   } else {
     Keyboard.set_key6(0);
   }
-
-  Keyboard.send_now();
-  Serial.println("send key");
+  
+  Keyboard.send_now();;
 }
 
 void setNormalKeys() {
-  unsigned int modifiers = 0;
+  Keyboard.set_media(0);
+  unsigned long modifiers = 0;
 
   //clear unclicked keys from stack;
   struct keylist * current = first;
@@ -276,10 +276,7 @@ void setNormalKeys() {
   for(int i = 0; i < 17; i++) {
     for(int j = 0; j < 6; j++) {
       if(activeMap[i][j] && normalMap[i][j]) {
-        if(normalMap[i][j] >> 15) {
-          //modifier keys
-          modifiers = modifiers | normalMap[i][j];
-        } else {
+        if(normalMap[i][j] > 0xF000) {
           //check if key is already in the list
           current = first;
           existed = false;
@@ -292,6 +289,11 @@ void setNormalKeys() {
           if(!existed) {
             createEntry(i, j, normalMap[i][j]);
           }
+        } else if(normalMap[i][j] > 0xE400) {
+          
+        } else {
+           //modifier keys
+          modifiers = modifiers | normalMap[i][j];
         }
       }
     }
@@ -300,8 +302,12 @@ void setNormalKeys() {
 }
 
 void setFnKeys() {
+  
   Keyboard.set_modifier(0);
   //clear unclicked keys from stack;
+
+  unsigned long mediaKey = 0;
+
   
   struct keylist * current = first;
   bool existed = false;
@@ -316,9 +322,7 @@ void setFnKeys() {
   for(int i = 0; i < 17; i++) {
     for(int j = 0; j < 6; j++) {
       if(activeMap[i][j] && fnMap[i][j]) {
-        if(fnMap[i][j] >> 15) {
-          //modifier keys
-        } else {
+        if(fnMap[i][j] > 0xF000) {
           //check if key is already in the list
           current = first;
           existed = false;
@@ -331,13 +335,20 @@ void setFnKeys() {
           if(!existed) {
             createEntry(i, j, fnMap[i][j]);
           }
+        } else if(fnMap[i][j] > 0xE400) {
+          //media keys
+          mediaKey = fnMap[i][j];
+        } else {
+          //modifier keys
         }
       }
     }
   }
+
+  Keyboard.set_media(mediaKey);
 }
 
-struct keylist *createEntry(int column, int row, unsigned int keyCode) {
+struct keylist *createEntry(int column, int row, unsigned long keyCode) {
   struct keylist *entry = (struct keylist *)malloc(sizeof(struct keylist));
   entry->column = column;
   entry->row = row;
