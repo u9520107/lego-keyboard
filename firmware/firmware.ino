@@ -119,15 +119,15 @@ unsigned long fnMap[17][6] = {
   },
   {
     //7
-    KEY_MEDIA_STOP, 0, 0, 0, 0, 0
+    KEY_MEDIA_PLAY_PAUSE, 0, 0, 0, 0, 0
   },
   {
     //8
-    KEY_MEDIA_PREV_TRACK, 0, 0, 0, 0, 0
+    KEY_MEDIA_STOP, 0, 0, 0, 0, 0
   },
   {
     //9
-    KEY_MEDIA_PLAY_PAUSE, 0, 0, 0, 0, 0
+    KEY_MEDIA_PREV_TRACK, 0, 0, 0, 0, 0
   },
   {
     //10
